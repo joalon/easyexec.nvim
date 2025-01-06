@@ -20,7 +20,7 @@ function M.exec()
 
 		vim.api.nvim_set_current_win(win)
 
-		M.current_channel_id = vim.fn.termopen({ "bash" }, {
+		M.current_channel_id = vim.fn.termopen({ vim.opt.shell:get() }, {
 			on_exit = function(_, _, _)
 				if vim.api.nvim_win_is_valid(win) then
 					vim.api.nvim_win_close(win, true)
