@@ -7,6 +7,10 @@ M.last_command = nil
 function M.exec()
 	local command = vim.fn.input({ prompt = "Exec: ", default = M.last_command })
 
+	if command == nil or command == "" then
+		return
+	end
+
 	-- Create window if not already there
 	if vim.fn.bufnr(M.current_buffer) == -1 then
 		local buf = vim.api.nvim_create_buf(false, true)
