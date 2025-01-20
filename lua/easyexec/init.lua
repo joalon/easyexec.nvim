@@ -1,8 +1,12 @@
 local M = {}
 
-M.current_channel_id = nil
-M.current_buffer = -1
-M.last_command = nil
+---@class easyexec.Config
+---@field window_config table
+
+---@type easyexec.Config
+M.config = {
+	window_config = { split = "right" },
+}
 
 -- Following function borrowed from: https://github.com/ViRu-ThE-ViRuS/configs/blob/f2b001b07b0da4c39b3beea00c90f249906d375c/nvim/lua/lib/misc.lua#L27
 -- scroll target buffer to end (set cursor to last line)
@@ -22,6 +26,29 @@ local function scroll_to_end(bufnr)
 	vim.api.nvim_set_current_win(cur_win)
 end
 
+function M.setup(opts)
+	if opts == nil then
+		return
+	end
+	if opts.window_config == "float" then
+		M.config.window_config = {
+			style = "minimal",
+			relative = "win",
+			width = math.floor(vim.o.columns / 3),
+			height = vim.o.lines,
+			row = 1,
+			col = math.floor(vim.o.columns / 3) * 2,
+			border = "rounded",
+		}
+	else
+		M.config = opts
+	end
+end
+
+M.current_channel_id = nil
+M.current_buffer = -1
+M.last_command = nil
+
 function M.exec()
 	local command = vim.fn.input({ prompt = "Exec: ", default = M.last_command })
 
@@ -38,9 +65,7 @@ function M.exec()
 		vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
 		vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
 
-		local win = vim.api.nvim_open_win(buf, false, {
-			split = "right",
-		})
+		local win = vim.api.nvim_open_win(buf, false, M.config.window_config)
 
 		vim.api.nvim_set_current_win(win)
 
