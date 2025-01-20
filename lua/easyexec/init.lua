@@ -31,6 +31,8 @@ function M.exec()
 
 	-- Create window if not already there
 	if vim.fn.bufnr(M.current_buffer) == -1 then
+		local cur_win = vim.api.nvim_get_current_win()
+
 		local buf = vim.api.nvim_create_buf(false, true)
 		M.current_buffer = buf
 		vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
@@ -49,6 +51,8 @@ function M.exec()
 				end
 			end,
 		})
+
+		vim.api.nvim_set_current_win(cur_win)
 	end
 
 	vim.fn.chansend(M.current_channel_id, { command, "" })
