@@ -2,10 +2,12 @@ local M = {}
 
 ---@class easyexec.Config
 ---@field window_config table
+---@field use_snacks_terminal boolean
 
 ---@type easyexec.Config
 M.config = {
 	window_config = { split = "right" },
+	use_snacks_terminal = false,
 }
 
 -- Following function borrowed from: https://github.com/ViRu-ThE-ViRuS/configs/blob/f2b001b07b0da4c39b3beea00c90f249906d375c/nvim/lua/lib/misc.lua#L27
@@ -45,6 +47,31 @@ function M.setup(opts)
 	end
 end
 
+local exec_snacks = function(command)
+	if not vim.api.nvim_buf_is_valid(M.current_buffer) then
+		local existing = require("snacks").terminal.list()[1]
+		if existing == nil then
+			M.current_buffer = require("snacks").terminal.get().buf
+		else
+			M.current_buffer = existing.buf
+		end
+	end
+
+	if M.current_channel_id == nil then
+		local all_chans = vim.api.nvim_list_chans()
+		for _i, chan in ipairs(all_chans) do
+			if chan.buffer == M.current_buffer then
+				M.current_channel_id = chan.id
+				break
+			end
+		end
+	end
+
+	vim.fn.chansend(M.current_channel_id, { command, "" })
+	M.last_command = command
+	scroll_to_end(M.current_buffer)
+end
+
 M.current_channel_id = nil
 M.current_buffer = -1
 M.last_command = nil
@@ -56,8 +83,14 @@ function M.exec()
 		return
 	end
 
+	if M.config.use_snacks_terminal then
+		exec_snacks(command)
+		return
+	end
+
 	-- Create window if not already there
-	if vim.fn.bufnr(M.current_buffer) == -1 then
+	-- if vim.fn.bufnr(M.current_buffer) == -1 then
+	if not vim.api.nvim_buf_is_valid(M.current_buffer) then
 		local cur_win = vim.api.nvim_get_current_win()
 
 		local buf = vim.api.nvim_create_buf(false, true)
