@@ -11,6 +11,10 @@ I'm using lazy:
 {
   "joalon/easyexec.nvim",
   keys = { {"<leader>xe", "<cmd>Easyexec<cr>", desc = "Easyexec"} },
+  keys = {
+    {"<M-t>", "<Plug>(Easyexec)", desc = "Easy exec"}
+    {"<M-Shift-t>", "<Plug>(EasyexecReexec)", desc = "Easy re-exec"}
+  },
 }
 ```
 

@@ -72,24 +72,8 @@ local exec_snacks = function(command)
 	scroll_to_end(M.current_buffer)
 end
 
-M.current_channel_id = nil
-M.current_buffer = -1
-M.last_command = nil
-
-function M.exec()
-	local command = vim.fn.input({ prompt = "Exec: ", default = M.last_command })
-
-	if command == nil or command == "" then
-		return
-	end
-
-	if M.config.use_snacks_terminal then
-		exec_snacks(command)
-		return
-	end
-
+local exec_raw = function(command)
 	-- Create window if not already there
-	-- if vim.fn.bufnr(M.current_buffer) == -1 then
 	if not vim.api.nvim_buf_is_valid(M.current_buffer) then
 		local cur_win = vim.api.nvim_get_current_win()
 
@@ -98,6 +82,7 @@ function M.exec()
 		vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
 		vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
 
+		-- TODO: M.config.window_config can be empty
 		local win = vim.api.nvim_open_win(buf, false, M.config.window_config)
 
 		vim.api.nvim_set_current_win(win)
@@ -116,6 +101,38 @@ function M.exec()
 	vim.fn.chansend(M.current_channel_id, { command, "" })
 	M.last_command = command
 	scroll_to_end(M.current_buffer)
+end
+
+M.current_channel_id = nil
+M.current_buffer = -1
+M.last_command = nil
+
+function M.exec()
+	local command = vim.fn.input({ prompt = "Exec: ", default = M.last_command })
+
+	if command == nil or command == "" then
+		return
+	end
+
+	if M.config.use_snacks_terminal then
+		exec_snacks(command)
+		return
+	end
+
+	exec_raw(command)
+end
+
+function M.reexec()
+	if not M.last_command or M.last_command == "" then
+		return
+	end
+
+	if M.config.use_snacks_terminal then
+		exec_snacks(M.last_command)
+		return
+	end
+
+	exec_raw(M.last_command)
 end
 
 return M
