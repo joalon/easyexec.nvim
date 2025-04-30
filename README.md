@@ -10,7 +10,6 @@ I'm using lazy:
 ```
 {
   "joalon/easyexec.nvim",
-  keys = { {"<leader>xe", "<cmd>Easyexec<cr>", desc = "Easyexec"} },
   keys = {
     {"<M-t>", "<Plug>(Easyexec)", desc = "Easy exec"}
     {"<M-Shift-t>", "<Plug>(EasyexecReexec)", desc = "Easy re-exec"}
@@ -50,3 +49,13 @@ opts = {
 ```
 
 For more information on the window API refer to the Neovim `api-win_config` documentation.
+
+## Snacks terminal integration
+
+If you're using `snacks.terminal` you can add:
+
+```
+opts = { use_snacks_terminal = true }
+```
+
+Instead and it'll reuse your snacks terminal.
