@@ -20,12 +20,15 @@ I'm using lazy:
 
 ## Usage
 
-Execute the Easyexec user command `:Easyexec` or bind it to a key `<cmd>Easyexec<cr>`. It will ask for a command to run and execute it in a new terminal. Subsequent runs will reuse the terminal.
+Execute the Easyexec user command `:Easyexec` or bind it to a key `<cmd>Easyexec<cr>`.
+It will ask for a command to run and execute it in a new terminal. Subsequent run
+will reuse the terminal.
 
 ## Configuration
 
-By default Easyexec uses `snacks.terminal` to open a terminal. It can also take a
-window configuration according to the Neovim `api-win_config` documentation.
+By default Easyexec uses `snacks.terminal`, if its installed, to open a terminal.
+It can also take a window configuration according to the Neovim `api-win_config`
+documentation.
 
 ```
 {
