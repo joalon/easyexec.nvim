@@ -12,8 +12,8 @@ I'm using lazy:
 {
   "joalon/easyexec.nvim",
   keys = {
-    {"<M-t>", "<Plug>(Easyexec)", desc = "Easy exec"}
-    {"<M-Shift-t>", "<Plug>(EasyexecReexec)", desc = "Easy re-exec"}
+    {"<M-t>", "<Plug>(Easyexec)", desc = "Easy exec"},
+    {"<M-Shift-t>", "<Plug>(EasyexecReexec)", desc = "Easy re-exec"},
   },
 }
 ```
@@ -24,7 +24,8 @@ Execute the Easyexec user command `:Easyexec` or bind it to a key `<cmd>Easyexec
 
 ## Configuration
 
-By default Easyexec opens a split to the right with a terminal buffer inside. To customize the window you can pass a table with a window configuration, for example:
+By default Easyexec uses `snacks.terminal` to open a terminal. It can also take a
+window configuration according to the Neovim `api-win_config` documentation.
 
 ```
 {
@@ -49,14 +50,3 @@ opts = {
 }
 ```
 
-For more information on the window API refer to the Neovim `api-win_config` documentation.
-
-## Snacks terminal integration
-
-If you're using `snacks.terminal` you can add:
-
-```
-opts = { use_snacks_terminal = true }
-```
-
-Instead and it'll reuse your snacks terminal.

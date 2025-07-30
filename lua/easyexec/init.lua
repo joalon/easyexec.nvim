@@ -1,13 +1,18 @@
 local M = {}
 
+local snacks_installed, _ = pcall(require, "snacks")
 ---@class easyexec.Config
 ---@field window_config table
 ---@field use_snacks_terminal boolean
-
 ---@type easyexec.Config
 M.config = {
-	window_config = { split = "right" },
-	use_snacks_terminal = false,
+	window_config = {
+		split = "below",
+		win = 0,
+		width = vim.o.columns,
+		height = math.floor(vim.o.lines / 5),
+	},
+	use_snacks_terminal = snacks_installed,
 }
 
 -- Following function borrowed from: https://github.com/ViRu-ThE-ViRuS/configs/blob/f2b001b07b0da4c39b3beea00c90f249906d375c/nvim/lua/lib/misc.lua#L27
@@ -28,23 +33,8 @@ local function scroll_to_end(bufnr)
 	vim.api.nvim_set_current_win(cur_win)
 end
 
-function M.setup(opts)
-	if opts == nil then
-		return
-	end
-	if opts.window_config == "float" then
-		M.config.window_config = {
-			style = "minimal",
-			relative = "win",
-			width = math.floor(vim.o.columns / 3),
-			height = vim.o.lines,
-			row = 1,
-			col = math.floor(vim.o.columns / 3) * 2,
-			border = "rounded",
-		}
-	else
-		M.config = opts
-	end
+function M.setup(user_config)
+	M.config = vim.tbl_deep_extend("force", M.config, user_config or {})
 end
 
 local exec_snacks = function(command)
