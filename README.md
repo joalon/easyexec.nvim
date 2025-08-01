@@ -1,6 +1,6 @@
 # Easyexec
 
-A Neovim plugin for running commands in the terminal.
+A Neovim plugin for running commands in a terminal split.
 
 ![Demo](https://gist.githubusercontent.com/joalon/6917e4aab8911ff3a88ea1cde3467505/raw/b7fe68448af9efcf165c69f3b39656c5d792ea8e/output.gif)
 
@@ -53,3 +53,4 @@ opts = {
 }
 ```
 
+To turn off the snacks.nvim integration you can set `opts.use_snacks_terminal = false`.
