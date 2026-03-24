@@ -14,6 +14,7 @@ I'm using lazy:
   keys = {
     {"<M-t>", "<Plug>(Easyexec)", desc = "Easy exec"},
     {"<M-Shift-t>", "<Plug>(EasyexecReexec)", desc = "Easy re-exec"},
+    {"<M-s>", "<Plug>(EasyexecSendVisual)", mode = "x", desc = "Send visual selection to terminal"},
   },
 }
 ```
@@ -23,6 +24,8 @@ I'm using lazy:
 Execute the Easyexec user command `:Easyexec` or bind it to a key `<cmd>Easyexec<cr>`.
 It will ask for a command to run and execute it in a new terminal. Subsequent run
 will reuse the terminal.
+
+You can also send a visual selection to the terminal. Select text in visual mode and use `:EasyexecSendVisual` or bind `<Plug>(EasyexecSendVisual)` to a key.
 
 ## Configuration
 
