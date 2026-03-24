@@ -139,4 +139,19 @@ function M.reexec()
 	exec_raw(M.last_command)
 end
 
+function M.send_visual()
+	local lines = vim.fn.getregion(vim.fn.getpos("'<"), vim.fn.getpos("'>"), { type = vim.fn.visualmode() })
+
+	if #lines == 0 then
+		return
+	end
+
+	ensure_terminal()
+
+	M.last_command = table.concat(lines, "\n")
+	table.insert(lines, "")
+	vim.fn.chansend(M.current_channel_id, lines)
+	scroll_to_end(M.current_buffer)
+end
+
 return M
