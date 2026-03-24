@@ -16,3 +16,14 @@ vim.api.nvim_create_user_command("Easyexec", function()
 end, {
 	desc = "Execute a command",
 })
+
+vim.keymap.set("x", "<Plug>(EasyexecSendVisual)", function()
+	require("easyexec").send_visual()
+end, { noremap = true })
+
+vim.api.nvim_create_user_command("EasyexecSendVisual", function()
+	require("easyexec").send_visual()
+end, {
+	range = true,
+	desc = "Send visual selection to terminal",
+})
