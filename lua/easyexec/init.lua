@@ -37,8 +37,9 @@ function M.setup(user_config)
 	M.config = vim.tbl_deep_extend("force", M.config, user_config or {})
 end
 
-local exec_snacks = function(command)
+local ensure_snacks_terminal = function()
 	if not vim.api.nvim_buf_is_valid(M.current_buffer) then
+		M.current_channel_id = nil
 		local existing = require("snacks").terminal.list()[1]
 		if existing == nil then
 			M.current_buffer = require("snacks").terminal.get().buf
@@ -56,14 +57,16 @@ local exec_snacks = function(command)
 			end
 		end
 	end
+end
 
+local exec_snacks = function(command)
+	ensure_snacks_terminal()
 	vim.fn.chansend(M.current_channel_id, { command, "" })
 	M.last_command = command
 	scroll_to_end(M.current_buffer)
 end
 
-local exec_raw = function(command)
-	-- Create window if not already there
+local ensure_raw_terminal = function()
 	if not vim.api.nvim_buf_is_valid(M.current_buffer) then
 		local cur_win = vim.api.nvim_get_current_win()
 
@@ -87,10 +90,21 @@ local exec_raw = function(command)
 
 		vim.api.nvim_set_current_win(cur_win)
 	end
+end
 
+local exec_raw = function(command)
+	ensure_raw_terminal()
 	vim.fn.chansend(M.current_channel_id, { command, "" })
 	M.last_command = command
 	scroll_to_end(M.current_buffer)
+end
+
+local ensure_terminal = function()
+	if M.config.use_snacks_terminal then
+		ensure_snacks_terminal()
+	else
+		ensure_raw_terminal()
+	end
 end
 
 M.current_channel_id = nil
