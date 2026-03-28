@@ -140,7 +140,21 @@ function M.reexec()
 end
 
 function M.send_visual()
-	local lines = vim.fn.getregion(vim.fn.getpos("'<"), vim.fn.getpos("'>"), { type = vim.fn.visualmode() })
+	local mode = vim.fn.mode()
+	local pos1, pos2, region_type
+	if mode:match("[vV\x16]") then
+		-- Called from visual mode keymap (still in visual mode)
+		pos1 = vim.fn.getpos("v")
+		pos2 = vim.fn.getpos(".")
+		region_type = mode
+	else
+		-- Called from command after visual mode exited
+		pos1 = vim.fn.getpos("'<")
+		pos2 = vim.fn.getpos("'>")
+		region_type = vim.fn.visualmode()
+	end
+
+	local lines = vim.fn.getregion(pos1, pos2, { type = region_type })
 
 	if #lines == 0 then
 		return
