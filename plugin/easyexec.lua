@@ -18,7 +18,9 @@ end, {
 })
 
 vim.keymap.set("x", "<Plug>(EasyexecSendVisual)", function()
-	require("easyexec").send_visual()
+	local vmode = vim.fn.mode()
+	local lines = vim.fn.getregion(vim.fn.getpos("v"), vim.fn.getpos("."), { type = vmode })
+	require("easyexec").send_visual(lines)
 end, { noremap = true })
 
 vim.api.nvim_create_user_command("EasyexecSendVisual", function()

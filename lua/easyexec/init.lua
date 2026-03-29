@@ -59,13 +59,6 @@ local ensure_snacks_terminal = function()
 	end
 end
 
-local exec_snacks = function(command)
-	ensure_snacks_terminal()
-	vim.fn.chansend(M.current_channel_id, { command, "" })
-	M.last_command = command
-	scroll_to_end(M.current_buffer)
-end
-
 local ensure_raw_terminal = function()
 	if not vim.api.nvim_buf_is_valid(M.current_buffer) then
 		local cur_win = vim.api.nvim_get_current_win()
@@ -92,13 +85,6 @@ local ensure_raw_terminal = function()
 	end
 end
 
-local exec_raw = function(command)
-	ensure_raw_terminal()
-	vim.fn.chansend(M.current_channel_id, { command, "" })
-	M.last_command = command
-	scroll_to_end(M.current_buffer)
-end
-
 local ensure_terminal = function()
 	if M.config.use_snacks_terminal then
 		ensure_snacks_terminal()
@@ -111,6 +97,15 @@ M.current_channel_id = nil
 M.current_buffer = -1
 M.last_command = nil
 
+-- Send a command string to the terminal. Prepends Ctrl-U to clear the line,
+-- which also acts as a sacrificial byte: if the first byte sent to the
+-- terminal is dropped (a Neovim terminal race condition), the Ctrl-U is
+-- lost instead of the command's first character.
+local function send_to_terminal(command)
+	vim.fn.chansend(M.current_channel_id, "\x15" .. command .. "\n")
+	scroll_to_end(M.current_buffer)
+end
+
 function M.exec()
 	local command = vim.fn.input({ prompt = "Exec: ", default = M.last_command })
 
@@ -118,12 +113,9 @@ function M.exec()
 		return
 	end
 
-	if M.config.use_snacks_terminal then
-		exec_snacks(command)
-		return
-	end
-
-	exec_raw(command)
+	ensure_terminal()
+	M.last_command = command
+	send_to_terminal(command)
 end
 
 function M.reexec()
@@ -131,30 +123,15 @@ function M.reexec()
 		return
 	end
 
-	if M.config.use_snacks_terminal then
-		exec_snacks(M.last_command)
-		return
-	end
-
-	exec_raw(M.last_command)
+	ensure_terminal()
+	send_to_terminal(M.last_command)
 end
 
-function M.send_visual()
-	local mode = vim.fn.mode()
-	local pos1, pos2, region_type
-	if mode:match("[vV\x16]") then
-		-- Called from visual mode keymap (still in visual mode)
-		pos1 = vim.fn.getpos("v")
-		pos2 = vim.fn.getpos(".")
-		region_type = mode
-	else
-		-- Called from command after visual mode exited
-		pos1 = vim.fn.getpos("'<")
-		pos2 = vim.fn.getpos("'>")
-		region_type = vim.fn.visualmode()
+function M.send_visual(lines)
+	if not lines then
+		-- Called from :EasyexecSendVisual command (visual mode already exited, marks set)
+		lines = vim.fn.getregion(vim.fn.getpos("'<"), vim.fn.getpos("'>"), { type = vim.fn.visualmode() })
 	end
-
-	local lines = vim.fn.getregion(pos1, pos2, { type = region_type })
 
 	if #lines == 0 then
 		return
@@ -163,9 +140,7 @@ function M.send_visual()
 	ensure_terminal()
 
 	M.last_command = table.concat(lines, "\n")
-	table.insert(lines, "")
-	vim.fn.chansend(M.current_channel_id, lines)
-	scroll_to_end(M.current_buffer)
+	send_to_terminal(M.last_command)
 end
 
 return M
