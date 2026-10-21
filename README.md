@@ -69,6 +69,7 @@ To turn off the snacks.nvim integration you can set `opts.use_snacks_terminal = 
 The command prompt has two styles, set with `opts.input_style`:
 
 - `"cmdline"`: an unstyled `Exec: ` prompt at the bottom left, like `input()`
-- `"popup"`: a bordered floating box in the middle of the screen
+- `"popup"`: a bordered floating box. With noice.nvim it copies the look and
+  position of noice's cmdline popup.
 
 It defaults to `"popup"` when running under LazyVim and `"cmdline"` otherwise.
