@@ -56,6 +56,12 @@ The command is entered in a small input buffer, prefilled with the last command.
 and `&&`. Paths are completed relative to Neovim's working directory, not the
 terminal's.
 
+If [bash-completion](https://github.com/scop/bash-completion) is installed,
+arguments are completed by the command's own bash completion, e.g. `cargo r` →
+`run`, `git ch` → `checkout`, `cargo run --q` → `--quiet`. It runs in the
+background, so the menu shows up once bash has answered. Commands without a bash
+completion fall back to file paths.
+
 The buffer has filetype `easyexec_input`, so you can hook up your own mappings
 or completion in a `FileType` autocmd. It sets `vim.b.completion = false` to keep
 blink.cmp from popping up over the shell completion.

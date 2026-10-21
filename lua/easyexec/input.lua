@@ -193,11 +193,17 @@ function M.open(opts, on_confirm)
 		finish(nil)
 	end
 
+	-- The menu isn't drawn while typeahead is pending, so pumvisible() misses
+	-- completion started by keys typed in quick succession
+	local function completing()
+		return vim.fn.pumvisible() == 1 or vim.fn.complete_info({ "mode" }).mode ~= ""
+	end
+
 	local map_opts = { buffer = buf, nowait = true }
 	vim.keymap.set("n", "<CR>", confirm, map_opts)
 	vim.keymap.set("i", "<CR>", function()
 		-- Accept a selected completion instead of running the command
-		if vim.fn.pumvisible() == 1 and vim.fn.complete_info({ "selected" }).selected ~= -1 then
+		if completing() and vim.fn.complete_info({ "selected" }).selected ~= -1 then
 			vim.api.nvim_feedkeys(vim.keycode("<C-y>"), "n", false)
 		else
 			confirm()
@@ -210,10 +216,10 @@ function M.open(opts, on_confirm)
 	-- Shell completion on <Tab>, cycling through matches while the menu is open
 	local expr_opts = { buffer = buf, nowait = true, expr = true }
 	vim.keymap.set("i", "<Tab>", function()
-		return vim.fn.pumvisible() == 1 and "<C-n>" or "<C-x><C-u>"
+		return completing() and "<C-n>" or require("easyexec.complete").trigger()
 	end, expr_opts)
 	vim.keymap.set("i", "<S-Tab>", function()
-		return vim.fn.pumvisible() == 1 and "<C-p>" or "<S-Tab>"
+		return completing() and "<C-p>" or "<S-Tab>"
 	end, expr_opts)
 
 	vim.api.nvim_create_autocmd("WinLeave", {
