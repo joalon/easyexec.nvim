@@ -41,12 +41,59 @@ function M.setup(user_config)
 	M.user_window_config = user_config ~= nil and user_config.window_config ~= nil
 end
 
+M.terminal_ready = true
+local pending_commands = {}
+
+local function flush_pending()
+	for _, command in ipairs(pending_commands) do
+		vim.fn.chansend(M.current_channel_id, command)
+	end
+	pending_commands = {}
+	scroll_to_end(M.current_buffer)
+end
+
+-- A freshly started shell echoes input that arrives before its prompt is drawn,
+-- so hold commands until the terminal has printed something and gone quiet
+local function wait_until_ready(bufnr)
+	M.terminal_ready = false
+	local timer = vim.uv.new_timer()
+
+	local function ready()
+		if M.terminal_ready then
+			return
+		end
+		M.terminal_ready = true
+		timer:stop()
+		timer:close()
+		flush_pending()
+	end
+
+	-- Give up waiting on shells that print nothing
+	timer:start(5000, 0, vim.schedule_wrap(ready))
+
+	vim.api.nvim_buf_attach(bufnr, false, {
+		on_lines = function()
+			if M.terminal_ready then
+				return true -- detach
+			end
+			local has_output = vim.iter(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)):any(function(line)
+				return line:find("%S") ~= nil
+			end)
+			if has_output then
+				timer:stop()
+				timer:start(100, 0, vim.schedule_wrap(ready))
+			end
+		end,
+	})
+end
+
 local ensure_snacks_terminal = function()
 	if not vim.api.nvim_buf_is_valid(M.current_buffer) then
 		M.current_channel_id = nil
 		local existing = require("snacks").terminal.list()[1]
 		if existing == nil then
 			M.current_buffer = require("snacks").terminal.get().buf
+			wait_until_ready(M.current_buffer)
 		else
 			M.current_buffer = existing.buf
 		end
@@ -85,6 +132,7 @@ local ensure_raw_terminal = function()
 			end,
 		})
 
+		wait_until_ready(buf)
 		vim.api.nvim_set_current_win(cur_win)
 	end
 end
@@ -106,8 +154,10 @@ M.last_command = nil
 -- terminal is dropped (a Neovim terminal race condition), the Ctrl-U is
 -- lost instead of the command's first character.
 local function send_to_terminal(command)
-	vim.fn.chansend(M.current_channel_id, "\x15" .. command .. "\n")
-	scroll_to_end(M.current_buffer)
+	table.insert(pending_commands, "\x15" .. command .. "\n")
+	if M.terminal_ready then
+		flush_pending()
+	end
 end
 
 function M.exec()
