@@ -37,6 +37,8 @@ end
 
 function M.setup(user_config)
 	M.config = vim.tbl_deep_extend("force", M.config, user_config or {})
+	-- The default window_config is never empty, so remember if the user set one
+	M.user_window_config = user_config ~= nil and user_config.window_config ~= nil
 end
 
 local ensure_snacks_terminal = function()

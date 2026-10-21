@@ -14,7 +14,7 @@ function M.check()
 		return
 	end
 
-	if easyexec.config.use_snacks_terminal and next(easyexec.config.window_config) ~= nil then
+	if easyexec.config.use_snacks_terminal and easyexec.user_window_config then
 		vim.health.warn("Both 'use_snacks_terminal' and 'window_config' are set")
 	end
 
