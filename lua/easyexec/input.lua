@@ -16,6 +16,9 @@ function M.open(opts, on_confirm)
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
 	vim.api.nvim_set_option_value("filetype", "easyexec_input", { buf = buf })
+	vim.api.nvim_set_option_value("completefunc", "v:lua.require'easyexec.complete'.complete", { buf = buf })
+	-- Keep blink.cmp (LazyVim) from auto-completing buffer words over <Tab>
+	vim.b[buf].completion = false
 
 	-- Default may be multi-line (e.g. last command came from send_visual)
 	local lines = vim.split(opts.default or "", "\n", { plain = true })
@@ -87,10 +90,27 @@ function M.open(opts, on_confirm)
 	end
 
 	local map_opts = { buffer = buf, nowait = true }
-	vim.keymap.set({ "i", "n" }, "<CR>", confirm, map_opts)
+	vim.keymap.set("n", "<CR>", confirm, map_opts)
+	vim.keymap.set("i", "<CR>", function()
+		-- Accept a selected completion instead of running the command
+		if vim.fn.pumvisible() == 1 and vim.fn.complete_info({ "selected" }).selected ~= -1 then
+			vim.api.nvim_feedkeys(vim.keycode("<C-y>"), "n", false)
+		else
+			confirm()
+		end
+	end, map_opts)
 	vim.keymap.set({ "i", "n" }, "<C-c>", cancel, map_opts)
 	vim.keymap.set("n", "<Esc>", cancel, map_opts)
 	vim.keymap.set("n", "q", cancel, map_opts)
+
+	-- Shell completion on <Tab>, cycling through matches while the menu is open
+	local expr_opts = { buffer = buf, nowait = true, expr = true }
+	vim.keymap.set("i", "<Tab>", function()
+		return vim.fn.pumvisible() == 1 and "<C-n>" or "<C-x><C-u>"
+	end, expr_opts)
+	vim.keymap.set("i", "<S-Tab>", function()
+		return vim.fn.pumvisible() == 1 and "<C-p>" or "<S-Tab>"
+	end, expr_opts)
 
 	vim.api.nvim_create_autocmd("WinLeave", {
 		buffer = buf,

@@ -29,6 +29,10 @@ The command is entered in a small input buffer (filetype `easyexec_input`),
 prefilled with the last command. `<CR>` runs it; `<C-c>`, or `<Esc>`/`q` in normal
 mode, cancels.
 
+`<Tab>` completes shell commands, file paths and `$VARIABLES`, and cycles through
+matches (`<S-Tab>` goes back). `<CR>` on a selected match accepts it. Paths are
+completed relative to Neovim's working directory.
+
 You can also send a visual selection to the terminal. Select text in visual mode and use `:EasyexecSendVisual` or bind `<Plug>(EasyexecSendVisual)` to a key.
 
 ## Configuration
