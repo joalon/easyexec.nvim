@@ -45,26 +45,48 @@ M.terminal_ready = true
 local pending_commands = {}
 
 local function flush_pending()
-	for _, command in ipairs(pending_commands) do
+	local commands = pending_commands
+	pending_commands = {}
+	if #commands == 0 then
+		return
+	end
+
+	-- The shell may have exited, e.g. while we waited for its prompt
+	local alive = M.current_channel_id ~= nil
+		and vim.api.nvim_buf_is_valid(M.current_buffer)
+		and pcall(vim.api.nvim_get_chan_info, M.current_channel_id)
+		and vim.fn.jobwait({ M.current_channel_id }, 0)[1] == -1
+	if not alive then
+		vim.notify("easyexec: terminal is closed, command not sent", vim.log.levels.WARN)
+		return
+	end
+
+	for _, command in ipairs(commands) do
 		vim.fn.chansend(M.current_channel_id, command)
 	end
-	pending_commands = {}
 	scroll_to_end(M.current_buffer)
 end
 
 -- A freshly started shell echoes input that arrives before its prompt is drawn,
--- so hold commands until the terminal has printed something and gone quiet
+-- so hold commands until the terminal has printed something and gone quiet.
+-- Returns a function that stops waiting and flushes right away.
 local function wait_until_ready(bufnr)
 	M.terminal_ready = false
 	local timer = vim.uv.new_timer()
 
+	local done = false
 	local function ready()
-		if M.terminal_ready then
+		if done then
+			return
+		end
+		done = true
+		timer:stop()
+		timer:close()
+		-- A newer terminal replaced this one, it runs its own wait
+		if bufnr ~= M.current_buffer then
 			return
 		end
 		M.terminal_ready = true
-		timer:stop()
-		timer:close()
 		flush_pending()
 	end
 
@@ -73,7 +95,7 @@ local function wait_until_ready(bufnr)
 
 	vim.api.nvim_buf_attach(bufnr, false, {
 		on_lines = function()
-			if M.terminal_ready then
+			if done then
 				return true -- detach
 			end
 			local has_output = vim.iter(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)):any(function(line)
@@ -85,6 +107,8 @@ local function wait_until_ready(bufnr)
 			end
 		end,
 	})
+
+	return ready
 end
 
 local ensure_snacks_terminal = function()
@@ -124,15 +148,20 @@ local ensure_raw_terminal = function()
 
 		vim.api.nvim_set_current_win(win)
 
+		local stop_waiting
 		M.current_channel_id = vim.fn.termopen({ vim.opt.shell:get() }, {
 			on_exit = function(_, _, _)
+				-- Report commands queued for a shell that died before its prompt
+				if stop_waiting then
+					stop_waiting()
+				end
 				if vim.api.nvim_win_is_valid(win) then
 					vim.api.nvim_win_close(win, true)
 				end
 			end,
 		})
 
-		wait_until_ready(buf)
+		stop_waiting = wait_until_ready(buf)
 		vim.api.nvim_set_current_win(cur_win)
 	end
 end
