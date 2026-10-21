@@ -25,6 +25,10 @@ Execute the Easyexec user command `:Easyexec` or bind it to a key `<cmd>Easyexec
 It will ask for a command to run and execute it in a new terminal. Subsequent run
 will reuse the terminal.
 
+The command is entered in a small input buffer (filetype `easyexec_input`),
+prefilled with the last command. `<CR>` runs it; `<C-c>`, or `<Esc>`/`q` in normal
+mode, cancels.
+
 You can also send a visual selection to the terminal. Select text in visual mode and use `:EasyexecSendVisual` or bind `<Plug>(EasyexecSendVisual)` to a key.
 
 ## Configuration
@@ -57,3 +61,10 @@ opts = {
 ```
 
 To turn off the snacks.nvim integration you can set `opts.use_snacks_terminal = false`.
+
+The command prompt has two styles, set with `opts.input_style`:
+
+- `"cmdline"`: an unstyled `Exec: ` prompt at the bottom left, like `input()`
+- `"popup"`: a bordered floating box in the middle of the screen
+
+It defaults to `"popup"` when running under LazyVim and `"cmdline"` otherwise.

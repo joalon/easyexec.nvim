@@ -4,6 +4,7 @@ local snacks_installed, _ = pcall(require, "snacks")
 ---@class easyexec.Config
 ---@field window_config table
 ---@field use_snacks_terminal boolean
+---@field input_style? "cmdline"|"popup" nil picks "popup" under LazyVim, else "cmdline"
 ---@type easyexec.Config
 M.config = {
 	window_config = {
@@ -13,6 +14,7 @@ M.config = {
 		height = math.floor(vim.o.lines / 5),
 	},
 	use_snacks_terminal = snacks_installed,
+	input_style = nil,
 }
 
 -- Following function borrowed from: https://github.com/ViRu-ThE-ViRuS/configs/blob/f2b001b07b0da4c39b3beea00c90f249906d375c/nvim/lua/lib/misc.lua#L27
@@ -107,15 +109,17 @@ local function send_to_terminal(command)
 end
 
 function M.exec()
-	local command = vim.fn.input({ prompt = "Exec: ", default = M.last_command })
+	-- Checked at call time since LazyVim may finish loading after this module
+	local style = M.config.input_style or (_G.LazyVim and "popup" or "cmdline")
+	require("easyexec.input").open({ prompt = "Exec", default = M.last_command, style = style }, function(command)
+		if command == nil or command == "" then
+			return
+		end
 
-	if command == nil or command == "" then
-		return
-	end
-
-	ensure_terminal()
-	M.last_command = command
-	send_to_terminal(command)
+		ensure_terminal()
+		M.last_command = command
+		send_to_terminal(command)
+	end)
 end
 
 function M.reexec()
